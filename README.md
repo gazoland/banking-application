@@ -39,7 +39,8 @@ The payment terminal will act just like a credit card machine, registering purch
 
 For now, the frontend interface will be a Command-Line Interface (CLI). A proper HTML-web interface will be added in the short future.
 
-IMAGE HERE
+![architecture drawio](https://user-images.githubusercontent.com/68711010/212952364-2b16ccff-af1b-45bd-a955-08735afdb516.png)
+
 
 ## Data Model
 
@@ -69,4 +70,5 @@ There are a few entities to consider:
 - Invoices: The credit cards statements;
 - Purchases: Every credit card transaction.
 
-IMAGE HERE
+![db_schema](https://user-images.githubusercontent.com/68711010/212946708-6de724fb-9f18-4a91-a0dc-421d00e24194.png)
+

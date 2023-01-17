@@ -1,0 +1,7 @@
+bank-env/
+.*
+
+*.png
+
+drawio
+architecture
