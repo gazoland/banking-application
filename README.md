@@ -39,7 +39,8 @@ The payment terminal will act just like a credit card machine, registering purch
 
 For now, the frontend interface will be a Command-Line Interface (CLI). A proper HTML-web interface will be added in the short future.
 
-![architecture drawio](https://user-images.githubusercontent.com/68711010/212946650-587d9cb2-c7e0-4a85-88c5-2141ed96fa52.png)
+![architecture drawio](https://user-images.githubusercontent.com/68711010/212952364-2b16ccff-af1b-45bd-a955-08735afdb516.png)
+
 
 ## Data Model
 
