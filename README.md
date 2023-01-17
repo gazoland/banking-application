@@ -6,7 +6,7 @@ The purpose of this project is to build an online banking web application for a 
 
 ## Application Requirements
 
-### Bank clients
+### Bank Clients
 
 - Update personal information (username, password, email, phone number and treatment pronoun);
 - Make transactions (deposit, withdraw, transfer) and view account's statement;
