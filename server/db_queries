@@ -1,0 +1,233 @@
+DROP SCHEMA IF EXISTS bank CASCADE;
+
+-- Creating schema and database tables:
+CREATE SCHEMA IF NOT EXISTS bank;
+
+CREATE TABLE IF NOT EXISTS bank.treatment_pronouns (
+	id SERIAL PRIMARY KEY,
+	pronoun VARCHAR(10) UNIQUE
+);
+INSERT INTO bank.treatment_pronouns (pronoun) VALUES ('Mr.'), ('Mrs.'), ('Ms.'), ('Miss'), ('Mx'), (NULL);
+
+CREATE TABLE IF NOT EXISTS bank.clients (
+	id SERIAL PRIMARY KEY,
+	username VARCHAR(50) UNIQUE NOT NULL,
+	full_name VARCHAR(80) NOT NULL,
+	dob DATE NOT NULL,
+	email VARCHAR(50) UNIQUE NOT NULL,
+	pwd VARCHAR(256) NOT NULL,
+	phone VARCHAR(15) NOT NULL,
+	pronoun_id INTEGER,
+	dt_updated TIMESTAMP NOT NULL DEFAULT NOW(),
+	FOREIGN KEY (pronoun_id) REFERENCES bank.treatment_pronouns (id) ON DELETE SET NULL
+);
+
+CREATE TABLE IF NOT EXISTS bank.accounts (
+	id SERIAL PRIMARY KEY,
+	acc_number BIGINT UNIQUE NOT NULL,
+	client_id BIGINT UNIQUE NOT NULL,
+	balance NUMERIC (68,2) NOT NULL,
+	dt_open TIMESTAMP NOT NULL,
+	active BOOL NOT NULL,
+	dt_close TIMESTAMP,
+	FOREIGN KEY (client_id) REFERENCES bank.clients (id) ON DELETE NO ACTION
+);
+
+CREATE TABLE IF NOT EXISTS bank.card_brands (
+	id SERIAL PRIMARY KEY,
+	brand_name VARCHAR(30) UNIQUE NOT NULL
+);
+INSERT INTO bank.card_brands (brand_name) VALUES ('MasterCard'), ('Visa'), ('American Express');
+
+CREATE TABLE IF NOT EXISTS bank.card_categories (
+	id SERIAL PRIMARY KEY,
+	category VARCHAR(20) UNIQUE NOT NULL
+);
+INSERT INTO bank.card_categories (category) VALUES ('Silver'), ('Gold'), ('Platinum'), ('Black');
+
+CREATE TYPE card_type AS ENUM ('debit', 'credit', 'debit/credit');
+CREATE TYPE statement_closing_day AS ENUM ('05', '10', '15', '20', '25');
+CREATE TABLE IF NOT EXISTS bank.cards (
+	id SERIAL PRIMARY KEY,
+    account_id BIGINT NOT NULL,
+	card_number VARCHAR(16) UNIQUE NOT NULL,
+    card_name VARCHAR(26) NOT NULL,
+    security_code NUMERIC(3,0) NOT NULL,
+    pin VARCHAR(256) NOT NULL,
+    exp_date DATE NOT NULL,
+    type card_type NOT NULL,
+    brand_id INTEGER NOT NULL,
+    category_id INTEGER NOT NULL,
+    active BOOL NOT NULL,
+    activation_code VARCHAR(6) NOT NULL,
+    unlocked BOOL NOT NULL,
+    statement_day statement_closing_day NOT NULL,
+    current_limit INTEGER,
+    FOREIGN KEY (account_id) REFERENCES bank.accounts (id) ON DELETE SET NULL,
+    FOREIGN KEY (brand_id) REFERENCES bank.card_brands (id) ON DELETE NO ACTION,
+    FOREIGN KEY (category_id) REFERENCES bank.card_categories (id) ON DELETE NO ACTION
+);
+
+CREATE TYPE transaction_type AS ENUM ('send', 'receive', 'deposit', 'withdraw', 'payment', 'purchase');
+CREATE TABLE IF NOT EXISTS bank.transactions (
+	id BIGSERIAL PRIMARY KEY,
+	account_id BIGINT NOT NULL,
+	card_id BIGINT,
+	type transaction_type NOT NULL,
+	amount NUMERIC(8,2) NOT NULL,
+	from_to VARCHAR(50),
+	dt_created TIMESTAMP NOT NULL DEFAULT NOW(),
+	FOREIGN KEY (account_id) REFERENCES bank.accounts (id) ON DELETE NO ACTION,
+	FOREIGN KEY (card_id) REFERENCES bank.cards (id) ON DELETE NO ACTION
+);
+
+CREATE TYPE invoice_status_type AS ENUM ('open', 'closed', 'paid', 'overdue', 'canceled');
+CREATE TABLE IF NOT EXISTS bank.invoices (
+	id SERIAL PRIMARY KEY,
+	card_id BIGINT NOT NULL,
+	total NUMERIC(8,2) NOT NULL DEFAULT 0,
+	interest NUMERIC(8,2),
+	dt_start DATE NOT NULL,
+	dt_end DATE NOT NULL,
+	dt_due DATE NOT NULL,
+	dt_paid DATE,
+	status invoice_status_type NOT NULL DEFAULT 'open',
+	FOREIGN KEY (card_id) REFERENCES bank.cards (id) ON DELETE NO ACTION
+);
+
+CREATE TYPE purchase_status_type AS ENUM ('canceled', 'pending', 'confirmed');
+CREATE TABLE IF NOT EXISTS bank.purchases (
+	id BIGSERIAL PRIMARY KEY,
+	card_id BIGINT NOT NULL,
+	invoice_id BIGINT NOT NULL,
+	establishment VARCHAR(50) NOT NULL,
+	location VARCHAR(20) NOT NULL,
+	amount NUMERIC(8,2) NOT NULL,
+	purchase_status purchase_status_type NOT NULL,
+	dt_created TIMESTAMP NOT NULL DEFAULT NOW(),
+	FOREIGN KEY (card_id) REFERENCES bank.cards (id) ON DELETE NO ACTION,
+	FOREIGN KEY (invoice_id) REFERENCES bank.invoices (id) ON DELETE SET NULL
+);
+
+CREATE TABLE IF NOT EXISTS bank.card_requests (
+	id SERIAL PRIMARY KEY,
+	account_id BIGINT NOT NULL,
+	brand_id BIGINT NOT NULL,
+	category_id BIGINT NOT NULL,
+	type card_type NOT NULL,
+	pending BOOL NOT NULL,
+	approved BOOL NOT NULL,
+	dt_created TIMESTAMP NOT NULL DEFAULT NOW(),
+	dt_approved_denied TIMESTAMP,
+	decision_by (50),
+	FOREIGN KEY (account_id) REFERENCES bank.accounts (id) ON DELETE CASCADE,
+	FOREIGN KEY (brand_id) REFERENCES bank.card_brands (id) ON DELETE NO ACTION,
+	FOREIGN KEY (category_id) REFERENCES bank.card_categories ON DELETE NO ACTION
+);
+
+CREATE TABLE IF NOT EXISTS bank.employees (
+	id SERIAL PRIMARY KEY,
+	full_name VARCHAR(32) NOT NULL,
+	position VARCHAR(20) NOT NULL,
+	username VARCHAR(16) NOT NULL,
+	email VARCHAR(50) NOT NULL,
+	pwd VARCHAR(256) NOT NULL
+);
+
+
+-- Creating Triggers on Invoices table:
+
+-- -> Update invoice after insertion of confirmed purchase;
+CREATE OR REPLACE FUNCTION update_invoice_confirmed_purchase_insertion() RETURNS TRIGGER AS $$
+	BEGIN
+		IF new.purchase_status = 'confirmed' THEN
+			UPDATE bank.invoices SET total = total + new.amount WHERE id = NEW.invoice_id;
+		END IF;
+		RETURN NEW;
+	END;
+$$ LANGUAGE plpgsql;
+CREATE TRIGGER TR_update_invoice_on_confirmed_purchase_insertion AFTER INSERT ON bank.purchases
+	FOR EACH ROW EXECUTE FUNCTION update_invoice_confirmed_purchase_insertion();
+
+-- -> Update invoice after update purchase status (pending -> confirmed, confirmed -> canceled);
+CREATE OR REPLACE FUNCTION update_invoice_purchase_status_update() RETURNS TRIGGER AS $$
+	BEGIN
+		IF NEW.purchase_status = 'canceled' AND OLD.purchase_status = 'confirmed' THEN
+			UPDATE bank.invoices SET total = total - NEW.amount WHERE id = NEW.invoice_id;
+		ELSEIF NEW.purchase_status = 'confirmed' AND OLD.purchase_status = 'pending' THEN
+			UPDATE bank.invoices SET total = total + NEW.amount WHERE id = NEW.invoice_id;
+		END IF;
+		RETURN NEW;
+	END;
+$$ LANGUAGE plpgsql;
+CREATE TRIGGER TR_update_invoice_on_purchase_status_update AFTER UPDATE ON bank.purchases
+	FOR EACH ROW EXECUTE FUNCTION update_invoice_purchase_status_update();
+
+-- -> Update invoice before every deleted purchase;
+CREATE OR REPLACE FUNCTION update_invoice_confirmed_purchase_delete() RETURNS TRIGGER AS $$
+	BEGIN
+		IF OLD.purchase_status = 'confirmed' THEN
+			UPDATE bank.invoices SET total = total - OLD.amount WHERE id = OLD.invoice_id;
+		END IF;
+		RETURN OLD;
+	END;
+$$ LANGUAGE plpgsql;
+CREATE TRIGGER TR_update_invoice_on_confirmed_purchase_delete BEFORE DELETE ON bank.purchases
+	FOR EACH ROW EXECUTE FUNCTION update_invoice_confirmed_purchase_delete();
+
+
+-- Populate db tables with example data:
+
+INSERT INTO bank.employees (full_name, position, username, email, pwd)
+VALUES
+('Karen Boss','manager','karen111', 'karen.boss@myemail.com', 'pbkdf2:sha256:260000$FCWqWNJqz7v4lvD4$88f2384d0bb1d75c77eb9cf1457ebd500453c4e7e7ee645bce6e75341c50c84e');
+
+INSERT INTO bank.clients (username, full_name, dob, email, pwd, phone, pronoun_id)
+VALUES
+('mike111', 'Mike Blank', '1984-03-20', 'mike.mike@myemail.com', 'pbkdf2:sha256:260000$gYEB4dNztgCqDHi0$12a4632bad01bb7680eec8333cde60d3dcdcf15ffff23ea28bb6440810306ae3', '4355555555', 1),
+('amy111', 'Amy Snow', '1993-09-06', 'amy.amy@myemail.com', 'pbkdf2:sha256:260000$qXekX28Ljnj3amZM$e3c272c2ba9daf8722f4acce437c01b634cb37626a821b126cae96370ca5d01a', '4354444444', 4),
+('bob111', 'Bob Han', '1977-04-10', 'bob.bob@myemail.com', 'pbkdf2:sha256:260000$3nJGGrQI4Q7E722l$ae8736ac751179c3337813e2d1c7de9c8867c441fa46f7dfb5b04ba6956baeda', '4353333333', 1),
+('liz111', 'Liz Perry', '1991-11-22', 'liz.liz@myemail.com', 'pbkdf2:sha256:260000$kuOVH31Nc65TUzE7$a96ba347bd6d1cfd8e7e9b3ed2751f5b36c8be53e29f0baf616c61ac5d66bd29', '4350000000', 3)
+;
+
+INSERT INTO bank.accounts (acc_number, client_id, balance, dt_open, active)
+VALUES
+(123456, 1, 1000.00, '2022-12-01', TRUE),
+(123457, 2, 800.00, '2022-12-01', TRUE),
+(123458, 3, 1200.00, '2022-12-01', TRUE),
+(123459, 4, 2000.00, '2022-12-01', TRUE);
+
+INSERT INTO bank.cards (account_id, card_number, card_name, security_code, pin, exp_date, type, brand_id, category_id, active, activation_code, unlocked, statement_day, current_limit)
+VALUES
+(1, '1234567890123456', 'MIKE BLANK', 123, 'pbkdf2:sha256:260000$3RqhPhRIGNncrtnG$7ab80686ffa2f89827cda685cbe6e66fb023e5781382e9e44b650e28c2c25564', '2026-05-01', 'debit', 1, 1, TRUE, '123456', TRUE, '05', NULL),
+(1, '1234567887654321', 'MIKE N BLANK', 222, 'pbkdf2:sha256:260000$OMT6lSwh7Ffgei4D$0124881595fc714f8fa186cfa263f1584f1a84b2520099971a02f62c6b0135c8', '2027-02-01', 'credit', 2, 2, TRUE, '654321', TRUE, '05', 300),
+(2, '1112223334445550', 'AMY SNOW', 333, 'pbkdf2:sha256:260000$K6ENRYGdHfAkIC0T$339a982a6fff81fae1e2a9a340acb1e8d66b4b1f9a91ba6d0a3fa6384722b4e0', '2028-08-01', 'debit/credit', 3, 1, TRUE, '010101', TRUE, '10', 250),
+(3, '9999888877776666', 'BOB K HAN', 444, 'pbkdf2:sha256:260000$Azl82OQbbPvJxODF$b4d302c4bc456a24534e10aadf5489203abf4f4d736878b3733eea530eb25fa7', '2025-10-01', 'credit', 2, 2, TRUE, '232323', TRUE, '20', 300),
+(4, '5566778899009988', 'LIZ J PERRY', 555, 'pbkdf2:sha256:260000$U4qxFSPhFN5zNObg$776bce30a9aa023aef6f866f241e4f2d11f8d9d1b8a30c57741e05b3138a8d76', '2024-06-01', 'credit', 1, 2, TRUE, '556545', FALSE, '25', 500),
+(4, '4448798794666445', 'LIZ PERRY', 666, 'pbkdf2:sha256:260000$zoM5wU3ojTIwB5ba$fe3bfe355190915890b3158be76decd821ad39e7c5f12a87c6b66a0e5b490f5e', '2029-04-01', 'debit/credit', 3, 3, FALSE, '649764', TRUE, '25', NULL);
+
+INSERT INTO bank.invoices (card_id, dt_start, dt_end, dt_due, status)
+VALUES
+(2, '2022-01-05', '2022-02-05', '2023-02-10', 'open'),
+(3, '2023-01-10', '2023-02-10', '2023-02-15', 'open'),
+(4, '2023-01-20', '2023-02-20', '2023-02-25', 'open'),
+(5, '2023-01-25', '2023-02-25', '2023-03-02', 'open'),
+(6, '2023-01-25', '2023-02-25', '2023-03-02', 'open');
+
+INSERT INTO bank.purchases (card_id, invoice_id, establishment, location, amount, purchase_status)
+VALUES
+(2, 1, 'STARBUCKS 4218614', 'NEW YORK NY', 21.37, 'confirmed'),
+(2, 1, 'BESTBUYONLINE 1264633', 'MINNEAPOLIS MN', 101.12, 'confirmed'),
+(2, 1, 'MCDONALDS 564553', 'NEW YORK NY', 8.72, 'confirmed'),
+(2, 1, 'AMAZONONLINE 21345', 'SEATTLE WA', 56.06, 'pending'),
+(2, 1, 'LITTLE ITALY 9584245', 'NEW YORK NY', 17.65, 'confirmed'),
+(3, 2, 'TOMS HOTDOG 2531665', 'NEW YORK NY', 7.24, 'confirmed'),
+(3, 2, 'AMAZONONLINE 21345', 'SEATTLE WA', 85.3, 'confirmed'),
+(4, 3, 'PIZZA HUT 94961', 'PASADENA CA', 15.22, 'confirmed'),
+(4, 3, 'BEST PARKING 6246464', 'LOS ANGELES CA', 12.00, 'confirmed'),
+(4, 3, 'BIG SPORTS 4633848', 'LOS ANGELES CA', 62.51, 'confirmed'),
+(5, 4, 'WALMART 213645', 'SALT LAKE CITY UT', 119.58, 'confirmed'),
+(5, 4, 'HERTZ RENTAL 897421', 'SALT LAKE CITY UT', 96.58, 'confirmed'),
+(6, 5, 'WHOLE FOODS 361343', 'CHICAGO IL', 62.13, 'confirmed'),
+(6, 5, 'WALGREENS 72465', 'CHICAGO IL', 33.18, 'confirmed'),
+(6, 5, 'EXXON GAS STATION 423987', 'DETROIT MI', 44.79, 'confirmed');
