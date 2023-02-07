@@ -2,7 +2,7 @@
 
 ## Introduction
 
-The purpose of this project is to build an online banking web application for a banking system, where bank clients and bank employees can manage client's accounts and cards.
+The purpose of this project is to build a banking system with an online banking web application where bank clients and bank employees can manage client's accounts and cards.
 
 ## Application Requirements
 
