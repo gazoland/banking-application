@@ -3,6 +3,7 @@ bank-env/
 
 *.pyc
 *.png
+*.scss
 
 drawio
 architecture
