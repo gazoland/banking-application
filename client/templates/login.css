@@ -1,0 +1,155 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box; /* Will only consider the element for the box's size, ignoring the padding value */
+}
+
+#pageBody {
+    height: 100vh;
+
+    display: flex;
+    flex-direction: column;
+
+    background-color: #1e1e1e;
+    border: tan;
+}
+
+header {
+    width: 100%;
+    height: 372px;
+
+    display: flex;
+    align-items: center;
+
+    border: red;
+
+}
+
+.logoBox {
+    height: 148px;
+    width: 392px;
+
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+
+    border: blue;
+}
+
+.bankLogo {
+    height: 100%;
+    width: 100%;
+}
+
+.loginPage {
+    height: 100%;
+    width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+    
+    display: block;
+    align-items: center;
+    border: rgb(121, 74, 209);
+}
+
+.signInBox {
+    width: 480px;
+    height: 480px;
+    margin-left: auto;
+    margin-right: auto;
+
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+
+    background-image: linear-gradient(
+        to right bottom,
+        #1b2439,
+        #1f2537,
+        #232635,
+        #262833,
+        #282931,
+        #282a32,
+        #282c32,
+        #292d33,
+        #262f36,
+        #213239,
+        #1c3539,
+        #193737);
+
+    border: rgb(141, 141, 141) solid;
+    border-radius: 8px;
+    background-color: #222222;
+}
+
+.signInBox div {
+    padding-top: 64px;
+    padding-bottom: 36px;
+    
+    color: rgb(255, 255, 255);
+    font-family:Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
+    font-size: 32px;
+}
+
+.signInBox input[type=text], input[type=password] {
+    height: 50px;
+    width: 310px;
+    
+    padding: 12px 60px;
+    margin: 12px;
+    box-sizing: border-box;
+
+    outline: none;
+    border: 4px solid rgb(117, 117, 117);
+    border-radius: 8px;
+    color: white;
+    background-color: #1e1e1e;
+    opacity: 70%;
+    
+    font-family: Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
+    font-size:large;
+}
+
+#loginUser {
+    background: #1e1e1e url(../assets/user_login.png) left no-repeat;
+    background-size: 9% 60%;
+    background-position: 12px;
+}
+
+#loginPwd {
+    background: #1e1e1e url(../assets/lock_login.png) left no-repeat;
+    background-size: 9% 60%;
+    background-position: 12px;
+}
+
+.signInBox input[type=text]:focus {
+    outline: none;
+    border: solid rgb(212, 212, 212);
+    opacity: 60%;
+}
+
+.signInBox input[type=button] {
+    height: 70px;
+    width: 310px;
+
+    margin: 12px;
+    border: 2px solid rgb(117, 117, 117);
+    border-radius: 8px;
+    background-color: rgb(209, 209, 209);
+
+    text-align: center;
+    font-size: 24px;
+}
+
+.signInBox input[type=button]:hover {
+    background-color: rgb(141, 187, 180);
+    border-color: rgb(212, 212, 212);
+    cursor: pointer;
+}
+
+.signInBox input[type=button]:active {
+    background-color: rgb(141, 187, 180);
+    box-shadow: inset -1px -1px 3px rgba(0, 0, 0, 0.6), 
+        inset 2px 2px 3px rgba(0, 0, 0, 0.6);
+    cursor: pointer;
+}
