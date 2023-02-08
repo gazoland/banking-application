@@ -4,6 +4,7 @@
 
 The purpose of this project is to build a banking system with an online banking web application where bank clients and bank employees can manage client's accounts and cards.
 
+* This is a work in progress project. A proper web browser front-end is currently being developed.
 ## Application Requirements
 
 ### Bank Clients
