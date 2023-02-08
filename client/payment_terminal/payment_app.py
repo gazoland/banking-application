@@ -1,4 +1,8 @@
-from client.payment_terminal.src.menu import Menu
+import os
+import sys
+sys.path.append(os.getcwd() + "/client")
+
+from src.menu import Menu
 
 
 def main():

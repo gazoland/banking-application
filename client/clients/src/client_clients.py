@@ -1,7 +1,7 @@
 import requests
 import os
 
-from client import resources
+import resources
 
 class ClientsMenu:
     def __init__(self, personal_token, client_id, pronoun, username, email, phone):

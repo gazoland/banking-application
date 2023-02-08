@@ -1,5 +1,5 @@
-from server import resources
-from server.resources.queries import ClientQueries, AccountQueries, TransactionQueries, CardQueries, EmployeeQueries, InvoiceQueries, PurchaseQueries
+from src import resources
+from src.resources.queries import ClientQueries, AccountQueries, TransactionQueries, CardQueries, EmployeeQueries, InvoiceQueries, PurchaseQueries
 
 ##### LOGIN
 

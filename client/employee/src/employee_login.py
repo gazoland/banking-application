@@ -2,8 +2,8 @@ import requests
 import json
 import os
 
-from client.employee.src.employee_clients import ClientsMenu
-from client.employee.src.employee_cards import CardRequestsMenu
+from src.employee_clients import ClientsMenu
+from src.employee_cards import CardRequestsMenu
 
 
 class LoginMenu:

@@ -1,4 +1,8 @@
-from client.clients.src.client_login import Login, LoginMenu, InactiveAccount
+import os
+import sys
+sys.path.append(os.getcwd() + "/client")
+
+from src.client_login import Login, LoginMenu, InactiveAccount
 
 def main():
     login, data = False, None

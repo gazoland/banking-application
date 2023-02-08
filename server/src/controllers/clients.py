@@ -2,7 +2,7 @@ from flask_restx import Resource, Namespace, reqparse, abort
 from flask import make_response
 from werkzeug.security import generate_password_hash, check_password_hash
 
-from server import resources
+from src import resources
 
 
 clients_ns = Namespace("clients", path="/clients")

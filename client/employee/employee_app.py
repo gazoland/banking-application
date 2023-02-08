@@ -1,4 +1,8 @@
-from client.employee.src.employee_login import Login, LoginMenu
+import os
+import sys
+sys.path.append(os.getcwd() + "/client")
+
+from src.employee_login import Login, LoginMenu
 
 def main():
     login, data = False, None

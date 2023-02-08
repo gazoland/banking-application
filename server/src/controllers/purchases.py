@@ -3,7 +3,7 @@ from flask import make_response
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import date, datetime
 
-from server import resources
+from src import resources
 
 
 purchases_ns = Namespace("purchases", path="/purchases")

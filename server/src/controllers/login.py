@@ -1,8 +1,9 @@
-from flask_restx import Resource, Namespace, reqparse, abort
-from flask import make_response
+from flask_restx import Resource, Namespace, reqparse
+from flask import make_response, request, Response, abort, jsonify
 from werkzeug.security import check_password_hash
+import json
 
-from server import resources
+from src import resources
 
 login_ns = Namespace("login")
 
@@ -10,13 +11,24 @@ login_ns = Namespace("login")
 @login_ns.route("")
 class ClientLogin(Resource):
     def post(self):
-        login_args = LoginArgs()
+
+        data = json.loads(request.get_data().decode('utf-8'))
+        print(data, type(data))
+        usr = data["username"]
+        pwd = data["pwd"]
+        print(usr, pwd)
+        #input('dvsdvv?')
+        #login_args = LoginArgs()
         # Check DB
-        res = resources.get_password_with_username_or_client_id(login_args.username, where_column="username")
+
+        #res = resources.get_password_with_username_or_client_id(login_args.username, where_column="username")
+        res = resources.get_password_with_username_or_client_id(usr, where_column="username")
         if len(res) == 1:
             stored_pwd = res[0][0]
-            if check_password_hash(stored_pwd, login_args.pwd):
-                args = resources.get_login_args(login_args.username)
+            #if check_password_hash(stored_pwd, login_args.pwd):
+            if check_password_hash(stored_pwd, pwd):
+                #args = resources.get_login_args(login_args.username)
+                args = resources.get_login_args(usr)
                 if len(args) == 1:
                     args_dict = {
                         "client_id": args[0][0],
@@ -26,7 +38,8 @@ class ClientLogin(Resource):
                         "name": args[0][4],
                         "phone": args[0][5],
                         "email": args[0][6],
-                        "username": login_args.username,
+                        #"username": login_args.username,
+                        "username": usr,
                         "active": args[0][7]
                     }
                     # make personal token
@@ -47,13 +60,22 @@ class ClientLogin(Resource):
                             }
                         },
                         200
-                    )
+                    ).headers.add('Access-Control-Allow-Origin', '*')
                 else:
                     abort(502, message="Internal error.")
             else:
                 abort(401, message="Incorrect password.")
         else:
-            abort(400, message="Incorrect username/password.")
+            # abort(400, message="Incorrect username/password.")
+            #rresp = jsonify({"status":400, "text": "incorrectttt"})
+            resp = Response(response="Incorrect username/password", status=400)
+            resp.headers.add('Access-Control-Allow-Origin', '*')
+            return resp
+
+            rresp = jsonify(('incorrect', 400))
+            rresp.headers.add('Access-Control-Allow-Origin', '*')
+            return rresp
+            abort(400, "Incorrect username/password")
 
 
 @login_ns.route("/employee")
@@ -92,8 +114,8 @@ class EmployeeLogin(Resource):
             else:
                 abort(401, message="Incorrect password.")
         else:
-            abort(400, message="Incorrect username/password.")
-
+            #abort(400, message="Incorrect username/password.")
+            abort(Response("Incorrect username/password", 400))
 
 class LoginArgs:
     def __init__(self):

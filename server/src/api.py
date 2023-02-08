@@ -2,11 +2,11 @@ from flask import Blueprint
 from flask_restx import Api
 
 # Namespaces
-from server.controllers.login import login_ns
-from server.controllers.clients import clients_ns, emp_clients_ns
-from server.controllers.accounts import accounts_ns, emp_accounts_ns
-from server.controllers.cards import cards_ns, my_cards_ns, emp_cards_ns
-from server.controllers.purchases import purchases_ns
+from src.controllers.login import login_ns
+from src.controllers.clients import clients_ns, emp_clients_ns
+from src.controllers.accounts import accounts_ns, emp_accounts_ns
+from src.controllers.cards import cards_ns, my_cards_ns, emp_cards_ns
+from src.controllers.purchases import purchases_ns
 
 
 # Blueprint

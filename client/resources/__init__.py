@@ -1,1 +1,1 @@
-from client.resources.input_constraints import *
+from resources.input_constraints import *

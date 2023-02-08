@@ -2,7 +2,7 @@ import requests
 import os
 import json
 
-from client import resources
+import resources
 
 class ClientsMenu:
     def __init__(self, personal_token, emp_id):

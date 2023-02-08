@@ -1,7 +1,7 @@
 from flask_restx import Resource, Namespace, reqparse, abort
 from flask import make_response
 
-from server import resources
+from src import resources
 
 
 accounts_ns = Namespace("accounts", path="/accounts")

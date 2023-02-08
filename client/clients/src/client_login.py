@@ -2,9 +2,9 @@ import requests
 import json
 import os
 
-from client.clients.src.client_account import AccountMenu
-from client.clients.src.client_clients import ClientsMenu
-from client.clients.src.client_cards import CardsMenu
+from src.client_account import AccountMenu
+from src.client_clients import ClientsMenu
+from src.client_cards import CardsMenu
 
 class LoginMenu:
     def __init__(self, token, client_id, account_id, balance, pronoun, name, email, phone, username):

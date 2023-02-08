@@ -1,4 +1,4 @@
-from client.payment_terminal.src.purchase import PurchaseMenu
+from src.purchase import PurchaseMenu
 
 
 class Menu:

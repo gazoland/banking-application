@@ -1,7 +1,7 @@
 import json
 import requests
 
-from client import resources
+import resources
 
 
 class PurchaseMenu:
